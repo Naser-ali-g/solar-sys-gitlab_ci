@@ -78,10 +78,10 @@ docker_build:
   services:
     - docker:24.0.5-dind
   script: 
-    - docker run --name nginx -d nginx
+    - docker run --name nginx -p 80:80 -d nginx
     - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' nginx)
     - echo $IP
-    - docker run  alpine wget -O - $IP:3000 $IP | grep live
+    - docker run  alpine wget -O - $IP:80 $IP | grep live
 
 # docker_build:
 #   stage: docker
