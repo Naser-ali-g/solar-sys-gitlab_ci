@@ -164,4 +164,28 @@ describe('Testing Other Endpoints', () => {
         });
     });
 
+    describe('it should fetch Live Status', () => {
+        it('it checks Liveness endpoint', (done) => {
+          chai.request(server)
+              .get('/live')
+              .end((err, res) => {
+                    res.should.have.status(200);
+                    res.body.should.have.property('status').eql('live');
+                done();
+              });
+        });
+    });
+
+    describe('it should fetch Ready Status', () => {
+        it('it checks Readiness endpoint', (done) => {
+          chai.request(server)
+              .get('/ready')
+              .end((err, res) => {
+                    res.should.have.status(200);
+                    res.body.should.have.property('status').eql('ready');
+                done();
+              });
+        });
+    });
+
 });

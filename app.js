@@ -62,6 +62,20 @@ app.get('/os', function(req, res) {
     });
 })
 
+app.get('/live', function(req, res) {
+    res.setHeader('Content-Type', 'application/json');
+    res.send({
+        "status": "live"
+    });
+})
+
+app.get('/ready', function(req, res) {
+    res.setHeader('Content-Type', 'application/json');
+    res.send({
+        "status": "ready"
+    });
+})
+
 app.listen(process.env.PORT, () => {
     console.log("Server successfully running on port 3000");
 })

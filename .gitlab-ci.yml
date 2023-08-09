@@ -25,7 +25,7 @@ unit_testing:
       alias: mongo
       variables:
          MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"  
-  image: node:17-alpine3.14
+  image: node:18-alpine3.17
   cache:
     policy: pull-push
     key: testing
@@ -51,7 +51,7 @@ code_coverage:
       alias: mongo
       variables:
          MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"
-  image: node:17-alpine3.14
+  image: node:18-alpine3.17
   cache:
     policy: pull
     key: testing
@@ -79,6 +79,22 @@ docker_build:
     - docker:24.0.5-dind
   script: 
     - docker build -t $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION .
+    - docker images $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION
+    - mkdir image
+    - docker save $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION > image/$CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION.tar
+  artifacts:
+    paths:
+      - image
+
+docker_test:
+  stage: docker
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script:
+    - docker load -i image/$CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION.tar
+    - docker run -d -p 3000:3000 $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION
+    - curl localhost:3000/live
 
 docker_push:  
   stage: docker
@@ -88,5 +104,6 @@ docker_push:
   services:
     - docker:24.0.5-dind
   script: 
+    -  docker load -i image/$CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION.tar
     -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
     -  docker push $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION
