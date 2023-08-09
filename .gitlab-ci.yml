@@ -15,7 +15,7 @@ variables:
    MONGO_INITDB_ROOT_USERNAME: "root-user-1234"
    NODE_ENV_TESTING : "test"
    NODE_ENV_DEPLOY : "deploy"
-   CONTAINER_REGISTRY: "docker.io/$DOCKER_USERNAME"
+   DOCKER_USERNAME: "docker.io/$DOCKER_USERNAME"
    IMAGE_VERSION: $CI_PIPELINE_ID
 
 unit_testing:
@@ -78,10 +78,10 @@ docker_build:
   services:
     - docker:24.0.5-dind
   script: 
-    - docker build -t $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION .
-    - docker images $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION
+    - docker build -t $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION .
+    - docker images $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
     - mkdir image
-    - docker save $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION > image/$CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION.tar
+    - docker save $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION > image/node-solar-system-image.tar
   artifacts:
     paths:
       - image
@@ -94,8 +94,8 @@ docker_test:
   services:
     - docker:24.0.5-dind
   script:
-    - docker load -i image/$CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION.tar
-    - docker run -d -p 3000:3000 $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION
+    - docker load -i image/node-solar-system-image.tar
+    - docker run -d -p 3000:3000 $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
     - curl localhost:3000/live
 
 docker_push:  
@@ -106,6 +106,6 @@ docker_push:
   services:
     - docker:24.0.5-dind
   script: 
-    -  docker load -i image/$CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION.tar
+    -  docker load -i image/node-solar-system-image.tar
     -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-    -  docker push $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION
+    -  docker push $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
