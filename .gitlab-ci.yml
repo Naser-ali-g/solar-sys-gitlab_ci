@@ -15,7 +15,7 @@ unit_testing:
   image: node:17-alpine3.14
   cache:
     policy: pull-push
-    key: $CI_JOB_STAGE
+    key: testing
     paths:
       - node_modules
   before_script:
@@ -25,10 +25,28 @@ unit_testing:
   artifacts:
     name: Mocha Unit Testing
     expire_in: 3 weeks and 2 days
-    expose_as: 'Mocha-Unit-Test-Results'
     when: always
     paths:
       - test-results.xml
     reports:
       junit: test-results.xml
 
+code_coverage:
+  stage: testing
+  image: node:17-alpine3.14
+  cache:
+    policy: pull
+    key: testing
+    paths:
+      - node_modules
+  needs:
+    - unit_testing
+  before_script:
+    - npm install
+  script: |
+    NODE_ENV=production npm run coverage
+  artifacts:
+    paths:
+    - coverage/lcov-report/index.html
+    - coverage/cobertura-coverage.xml
+  coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
