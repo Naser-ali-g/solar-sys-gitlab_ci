@@ -9,11 +9,14 @@ workflow:
 
 stages:
   - testing
+  - docker
 
 variables:
    MONGO_INITDB_ROOT_USERNAME: "root-user-1234"
    NODE_ENV_TESTING : "test"
-   NODE_ENV_STAGE_PROD : "production"
+   NODE_ENV_DEPLOY : "deploy"
+   CONTAINER_REGISTRY: "docker.io/$DOCKER_USERNAME"
+   IMAGE_VERSION: $CI_PIPELINE_ID
 
 unit_testing:
   stage: testing
@@ -68,3 +71,22 @@ code_coverage:
     - coverage/
   coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
   allow_failure: true
+
+  docker_build:
+    stage: docker
+    image: docker:24.0.5
+    services:
+      - docker:24.0.5-dind
+    script: |
+      docker build -t $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION .
+
+  docker_push:  
+      stage: docker
+      needs:
+        - docker_build
+      image: docker:24.0.5
+      services:
+        - docker:24.0.5-dind
+      script: |
+        docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+        docker push $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION
