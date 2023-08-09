@@ -10,8 +10,16 @@ workflow:
 stages:
   - testing
 
+variables:
+   MONGO_INITDB_ROOT_USERNAME: "root-user-1234"
+
 unit_testing:
   stage: testing
+  # services:
+  #   - name: siddharth67/mongo-db:non-prod
+  #     alias: mongo
+  #     variables:
+  #        MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"  
   image: node:17-alpine3.14
   cache:
     policy: pull-push
@@ -21,7 +29,7 @@ unit_testing:
   before_script:
     - npm install
   script:
-    - NODE_ENV=production npm test
+    - NODE_ENV=development npm test
   artifacts:
     name: Mocha Unit Testing
     expire_in: 3 weeks and 2 days
