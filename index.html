@@ -1,0 +1,79 @@
+<html>
+   <head>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
+
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Encode+Sans:wght@900&family=Ubuntu&display=swap" rel="stylesheet">
+
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=BioRhyme&family=Encode+Sans:wght@900&family=Ubuntu&display=swap" rel="stylesheet">
+
+      <meta name='viewport' content='width=device-width, initial-scale=1'>
+      <style> 
+         #planetImage { 
+            background: url('https://raw.githubusercontent.com/sidd-harth/planets/main/images/heliocentric/solar-system.png')   center center; 
+            background-repeat: no-repeat;			   
+            background-size: cover; 
+            content: ''; 
+            position: static; 
+            animation: spin 25s linear infinite; 
+            width: 50vw; 
+            height: 50vw; 
+         } 
+         @keyframes spin { 
+             100% { transform: rotate(360deg); } 
+         } 
+         body { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: url('https://raw.githubusercontent.com/sidd-harth/solar-system-9/main/images/background.gif'); 
+         } 
+         /*.shadow { 
+         animation: rainbow 2s linear infinite; 
+         } */ 
+      </style>
+   </head>
+   <body>
+      <div>
+         <input type="submit"  id="submit" value="Search the Planet" 
+         style="float: right;
+             background-color:rgb(187, 75, 243);
+             color:white;
+             font-family: 'Ubuntu';
+             border-radius: 25px;     
+             border: 2px solid #609;    
+             padding: 20px; 
+             width: 200px; 
+             text-align:center;" /> 
+         <div style="overflow: hidden; padding-right: .5em;" > 
+            <input type="number" id="planetID" name="number" 
+            style="width: 100%;
+            background-color:rgb(218, 204, 226);
+            text-align:center; 
+            border-radius: 25px;     
+            border: 2px solid #609;    
+            padding: 20px;" placeholder="Enter a number(0 - 9) to view the planet"/> 
+         </div>
+         <div class="middle">
+            <h1 style="color:rgb(247, 145, 95); font-family: 'Encode Sans';" id="planetName"> Solar System </h1>
+         </div>
+         <div class="bottomleft">
+            <p  style="color:rgb(224, 224, 224); font-family: 'Ubuntu';" id="planetDescription">Solar system consists of our star, the Sun, and everything bound to it by gravity – <br> the planets Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune; <br> dwarf planets such as Pluto; dozens of moons; and millions <br> of asteroids, comets, and meteoroids.</p>
+         </div>
+         <br>
+         <div class="middle">
+            <h2 style="color:rgb(93, 150, 237); font-family: 'BioRhyme';"  id="hostname">Solar System Pod Name</h2>
+
+            <h3 style="color:rgb(111, 255, 171); font-family: 'Encode Sans';" id="environment">ENVIRONMENT: " placeholder "</h3>
+         </div>
+      </div>
+      <div  id="planetImage">  
+      </div>
+      <script type="text/javascript"  src="client.js" charset="utf-8"></script>
+   </body>
+</html>
