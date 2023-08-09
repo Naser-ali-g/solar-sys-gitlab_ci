@@ -1,0 +1,31 @@
+workflow:
+    name: NodeJS Solar System Application Pipeline
+    rules:
+        - if: $CI_COMMIT_BRANCH == 'main'
+          when: always
+        - if: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^feature/ && $CI_PIPELINE_SOURCE == 'merge_request_event' 
+          when: always
+        - when: never
+
+stages:
+  - testing
+
+unit_testing:
+  stage: testing
+  image: node:17-alpine3.14
+  cache:
+    policy: pull-push
+    key: $CI_JOB_STAGE
+    paths:
+      - node_modules
+  before_script:
+    - npm install
+  script: |
+    - NODE_ENV=production npm test
+  artifacts:
+    when: always
+    paths:
+      - test-results.xml
+    reports:
+      junit: test-results.xml
+
