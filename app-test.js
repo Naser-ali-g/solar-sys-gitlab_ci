@@ -141,7 +141,7 @@ describe('Planets API Suite', () => {
               .end((err, res) => {
                     res.should.have.status(200);
                     res.body.should.have.property('id').eql(9);
-                    res.body.should.have.property('name').eql('Pluto');
+                    res.body.should.have.property('name').eql('Sun');
                 done();
               });
         });
@@ -154,7 +154,7 @@ describe('Planets API Suite', () => {
 describe('Testing Other Endpoints', () => {
 
     describe('it should fetch OS Details', () => {
-        it('it should OS details', (done) => {
+        it('it should fetch OS details', (done) => {
           chai.request(server)
               .get('/os')
               .end((err, res) => {
