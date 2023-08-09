@@ -46,6 +46,9 @@ code_coverage:
   script: |
     NODE_ENV=production npm run coverage
   artifacts:
+    name: LCOV-and-Cobertura-Coverage
+    expire_in: 3 weeks and 2 days
+    when: always
     paths:
     - coverage/lcov-report/index.html
     - coverage/cobertura-coverage.xml
