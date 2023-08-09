@@ -61,8 +61,8 @@ code_coverage:
     - unit_testing
   before_script:
     - npm install
-  script: |
-    NODE_ENV=$NODE_ENV_TESTING npm run coverage
+  script:
+   - NODE_ENV=$NODE_ENV_TESTING npm run coverage
   artifacts:
     name: LCOV and Cobertura Coverage
     expire_in: 3 weeks and 2 days
@@ -72,21 +72,21 @@ code_coverage:
   coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
   allow_failure: true
 
-  docker_build:
-    stage: docker
-    image: docker:24.0.5
-    services:
-      - docker:24.0.5-dind
-    script: |
-      docker build -t $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION .
+docker_build:
+  stage: docker
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script: 
+    - docker build -t $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION .
 
-  docker_push:  
-      stage: docker
-      needs:
-        - docker_build
-      image: docker:24.0.5
-      services:
-        - docker:24.0.5-dind
-      script: |
-        docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-        docker push $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION
+docker_push:  
+  stage: docker
+  needs:
+   - docker_build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  script: 
+    -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+    -  docker push $CONTAINER_REGISTRY/node-solar-system:$IMAGE_VERSION
