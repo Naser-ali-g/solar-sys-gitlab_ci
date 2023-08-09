@@ -89,6 +89,8 @@ docker_build:
 docker_test:
   stage: docker
   image: docker:24.0.5
+  needs:
+    - docker_build
   services:
     - docker:24.0.5-dind
   script:
@@ -99,7 +101,7 @@ docker_test:
 docker_push:  
   stage: docker
   needs:
-   - docker_build
+   - docker_test
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
