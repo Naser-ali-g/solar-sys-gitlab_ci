@@ -78,36 +78,48 @@ docker_build:
   services:
     - docker:24.0.5-dind
   script: 
-    - docker build -t $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION .
-    - docker images $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
-    - mkdir image
-    - docker save $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION > image/node-solar-system-image.tar
-  artifacts:
-    paths:
-      - image
-
-docker_test:
-  stage: docker
-  image: docker:24.0.5
-  needs:
-    - docker_build
-  services:
-    - docker:24.0.5-dind
-  script:
-    - docker load -i image/node-solar-system-image.tar
-    - docker run --name node-app -d -p 3000:3000 $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
-    - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' node-app)
+    - docker run --name nginx -d nginx
+    - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' nginx)
     - echo $IP
-    - docker run -e node-app-ip=$IP -it alpine wget $node-app-ip:3000/live
+    - docker run -e node-app-ip=$IP alpine wget $node-app-ip:3000/live
 
-docker_push:  
-  stage: docker
-  needs:
-   - docker_test
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
-  script: 
-    -  docker load -i image/node-solar-system-image.tar
-    -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-    -  docker push $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
+# docker_build:
+#   stage: docker
+#   image: docker:24.0.5
+#   dependencies: []
+#   services:
+#     - docker:24.0.5-dind
+#   script: 
+#     - docker build -t $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION .
+#     - docker images $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
+#     - mkdir image
+#     - docker save $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION > image/node-solar-system-image.tar
+#   artifacts:
+#     paths:
+#       - image
+
+# docker_test:
+#   stage: docker
+#   image: docker:24.0.5
+#   needs:
+#     - docker_build
+#   services:
+#     - docker:24.0.5-dind
+#   script:
+#     - docker load -i image/node-solar-system-image.tar
+#     - docker run --name node-app -d -p 3000:3000 $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
+#     - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' node-app)
+#     - echo $IP
+#     - docker run -e node-app-ip=$IP -it alpine wget $node-app-ip:3000/live
+
+# docker_push:  
+#   stage: docker
+#   needs:
+#    - docker_test
+#   image: docker:24.0.5
+#   services:
+#     - docker:24.0.5-dind
+#   script: 
+#     -  docker load -i image/node-solar-system-image.tar
+#     -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+#     -  docker push $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
