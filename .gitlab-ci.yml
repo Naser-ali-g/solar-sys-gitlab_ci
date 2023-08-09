@@ -77,8 +77,6 @@ docker_build:
   dependencies: []
   services:
     - docker:24.0.5-dind
-  before_script:
-    - wget --help
   script: 
     - docker build -t $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION .
     - docker images $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
@@ -95,12 +93,12 @@ docker_test:
     - docker_build
   services:
     - docker:24.0.5-dind
-  before_script:
-    - wget --help
   script:
     - docker load -i image/node-solar-system-image.tar
-    - docker run -d -p 3000:3000 $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
-    - wget localhost:3000/live
+    - docker run -n node-app -d -p 3000:3000 $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
+    - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' node-app)
+    - echo $IP
+    - wget 127.0.0.1:3000/live
 
 docker_push:  
   stage: docker
