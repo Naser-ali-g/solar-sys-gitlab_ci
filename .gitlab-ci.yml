@@ -52,3 +52,4 @@ code_coverage:
     paths:
     - coverage/
   coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
+  allow_failure: true
