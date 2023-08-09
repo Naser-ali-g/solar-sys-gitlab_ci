@@ -77,6 +77,8 @@ docker_build:
   dependencies: []
   services:
     - docker:24.0.5-dind
+  before_script:
+    - wget --help
   script: 
     - docker build -t $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION .
     - docker images $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
@@ -94,7 +96,7 @@ docker_test:
   services:
     - docker:24.0.5-dind
   before_script:
-    - apt install -y curl
+    - wget --help
   script:
     - docker load -i image/node-solar-system-image.tar
     - docker run -d -p 3000:3000 $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
