@@ -110,7 +110,7 @@ docker_test:
     - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
     - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
     - echo $IP
-    - docker run  alpine wget -O - $IP/live:3000 | grep live
+    - docker run  alpine wget -O - http://$IP:3000/live | grep live
 
 docker_push:  
   stage: docker
