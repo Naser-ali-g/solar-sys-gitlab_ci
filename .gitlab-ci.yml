@@ -98,7 +98,7 @@ docker_test:
     - docker run --name node-app -d -p 3000:3000 $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
     - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' node-app)
     - echo $IP
-    - wget 127.0.0.1:3000/live
+    - wget $IP:3000/live
 
 docker_push:  
   stage: docker
