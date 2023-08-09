@@ -15,7 +15,6 @@ variables:
    MONGO_INITDB_ROOT_USERNAME: "root-user-1234"
    NODE_ENV_TESTING : "test"
    NODE_ENV_DEPLOY : "deploy"
-   DOCKER_USERNAME: "docker.io/$DOCKER_USERNAME"
    IMAGE_VERSION: $CI_PIPELINE_ID
 
 unit_testing:
@@ -75,6 +74,7 @@ code_coverage:
 docker_build:
   stage: docker
   image: docker:24.0.5
+  dependencies: []
   services:
     - docker:24.0.5-dind
   script: 
