@@ -12,6 +12,8 @@ stages:
 
 variables:
    MONGO_INITDB_ROOT_USERNAME: "root-user-1234"
+   NODE_ENV_TESTING : "test"
+   NODE_ENV_STAGE_PROD : "production"
 
 unit_testing:
   stage: testing
@@ -29,7 +31,7 @@ unit_testing:
   before_script:
     - npm install
   script:
-    - NODE_ENV=development npm test
+    - NODE_ENV=$NODE_ENV_TESTING npm test
   artifacts:
     name: Mocha Unit Testing
     expire_in: 3 weeks and 2 days
@@ -41,6 +43,11 @@ unit_testing:
 
 code_coverage:
   stage: testing
+  services:
+    - name: siddharth67/mongo-db:non-prod
+      alias: mongo
+      variables:
+         MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"
   image: node:17-alpine3.14
   cache:
     policy: pull
@@ -52,7 +59,7 @@ code_coverage:
   before_script:
     - npm install
   script: |
-    NODE_ENV=production npm run coverage
+    NODE_ENV=$NODE_ENV_TESTING npm run coverage
   artifacts:
     name: LCOV and Cobertura Coverage
     expire_in: 3 weeks and 2 days
