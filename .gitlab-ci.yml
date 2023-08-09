@@ -74,7 +74,7 @@ code_coverage:
 docker_build:
   stage: docker
   image: docker:24.0.5
-  dependencies: []
+  # dependencies: []
   services:
     - docker:24.0.5-dind
   script: 
@@ -93,6 +93,8 @@ docker_test:
     - docker_build
   services:
     - docker:24.0.5-dind
+  before_script:
+    - apt install -y curl
   script:
     - docker load -i image/node-solar-system-image.tar
     - docker run -d -p 3000:3000 $DOCKER_USERNAME/node-solar-system:$IMAGE_VERSION
