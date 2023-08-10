@@ -7,9 +7,9 @@ workflow:
           when: always
         - when: never
 
-stages:
-  - testing
-  - docker
+# stages:
+#   - testing
+#   - docker
 
 variables:
    MONGO_INITDB_ROOT_USERNAME: "root-user-1234"
@@ -126,7 +126,6 @@ variables:
 #     -  docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
 
 deploy:
-  stage: production
   image:
     name: bitnami/kubectl:latest
     entrypoint: [""]
