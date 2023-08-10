@@ -133,7 +133,7 @@ deploy:
   - ls -a
   - echo $KUBE_CONFIG
   - kubectl --kubeconfig=/builds/sidd-harth/staging-1.tmp/KUBE_CONFIG config get-contexts
-  - kubectl --kubeconfig=/builds/sidd-harth/staging-1.tmp/KUBE_CONFIG config use-context gke_qwiklabs-gcp-03-7b50f9ce5f83_us-central1_dev-cluster
+  # - kubectl --kubeconfig=/builds/sidd-harth/staging-1.tmp/KUBE_CONFIG config use-context gke_qwiklabs-gcp-03-7b50f9ce5f83_us-central1_dev-cluster
   - kubectl --kubeconfig=/builds/sidd-harth/staging-1.tmp/KUBE_CONFIG config view
   # - cat ~/.kube/config 
   - kubectl --kubeconfig=/builds/sidd-harth/staging-1.tmp/KUBE_CONFIG apply -f $CI_PROJECT_DIR/sampleapps/. # Directory where yamls are placed in repo
