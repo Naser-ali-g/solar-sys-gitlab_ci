@@ -1,13 +1,16 @@
 const path = require('path');
 const express = require('express');
 const OS = require('os');
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 const mongoose = require("mongoose");
 const dotenv = require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 const app = express();
-  
+const cors = require('cors')
+
+
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '/')));
+app.use(cors())
 
 mongoose.connect(process.env.MONGO_URI, {
     user: process.env.MONGO_USERNAME,
@@ -35,7 +38,8 @@ var dataSchema = new Schema({
 var planetModel = mongoose.model('planets', dataSchema);
 
 
-app.post('/planet', function(req, res) {
+
+app.post('/planet',   function(req, res) {
    // console.log("Received Planet ID " + req.body.id)
     planetModel.findOne({
         id: req.body.id
@@ -49,12 +53,12 @@ app.post('/planet', function(req, res) {
     })
 })
 
-app.get('/', async (req, res) => {
+app.get('/',   async (req, res) => {
     res.sendFile(path.join(__dirname, '/', 'index.html'));
 });
 
 
-app.get('/os', function(req, res) {
+app.get('/os',   function(req, res) {
     res.setHeader('Content-Type', 'application/json');
     res.send({
         "os": OS.hostname(),
@@ -62,14 +66,14 @@ app.get('/os', function(req, res) {
     });
 })
 
-app.get('/live', function(req, res) {
+app.get('/live',   function(req, res) {
     res.setHeader('Content-Type', 'application/json');
     res.send({
         "status": "live"
     });
 })
 
-app.get('/ready', function(req, res) {
+app.get('/ready',   function(req, res) {
     res.setHeader('Content-Type', 'application/json');
     res.send({
         "status": "ready"
@@ -77,7 +81,7 @@ app.get('/ready', function(req, res) {
 })
 
 app.listen(process.env.PORT, () => {
-    console.log("Server successfully running on port 3000");
+    console.log("Server successfully running on port - " +process.env.PORT);
 })
 
 

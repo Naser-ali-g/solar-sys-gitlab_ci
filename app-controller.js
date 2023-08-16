@@ -5,7 +5,7 @@ window.onload = function() {
     const planet_id = document.getElementById("planetID").value
     console.log("onLoad - Request Planet ID - " + planet_id)
 
-    fetch("http://localhost:3000/os", {
+    fetch("/os", {
             method: "GET"
         })
         .then(function(res) {
@@ -33,23 +33,7 @@ function func() {
     const planet_id = document.getElementById("planetID").value
     console.log("onClick Submit - Request Planet ID - " + planet_id)
 
-    // fetch("http://localhost:3000/os", {
-    //         method: "GET"
-    //     })
-    //     .then(function(res) {
-    //         if (res.ok) {
-    //             return res.json();
-    //         }
-    //         thrownewError('Request failed.');
-    //     }).catch(function(error) {
-    //         console.log(error);
-    //     })
-    //     .then(function(data) {
-    //         document.getElementById('hostname').innerHTML = ` ${data.os} `
-    //     });
-
-
-    fetch("http://localhost:3000/planet", {
+    fetch("/planet", {
             method: "POST",
             body: JSON.stringify({
                 id: document.getElementById("planetID").value
