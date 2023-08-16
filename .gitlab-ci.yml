@@ -154,7 +154,7 @@ dev_integration_testing:
   - curl -s -k https://$DEV_IP/live | jq -r .status | grep -i live
   - curl -s -k https://$DEV_IP/ready | jq -r .status | grep -i ready
 
-stage_deploy:
+staging_deploy:
   stage: stage-deploy
   image:
     name: alpine:3.7
@@ -165,15 +165,27 @@ stage_deploy:
     - apk add --no-cache gettext
     - envsubst -V
   script:
-  - echo $KUBE_CONFIG # first show only this echo and then show/run below commands
-  - export KUBECONFIG=$KUBE_CONFIG
-  - kubectl config get-contexts   #Initialized empty Git repository in /builds/sidd-harth/staging-1/.git/
+  - kubectl config get-contexts
+  - kubectl config use-context sidd-harth/staging-1:kk-agent
   - kubectl config view
   - for i in kubernetes/development/*.yaml; do envsubst < $i | kubectl apply -f -; done # Directory where yamls are placed in repo
   - kubectl -n $NAMESPACE get all,ing
-  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > dev_env_app_ingress_url.txt
+  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > stage_env_app_ingress_url.txt
   environment: 
-    name: development
+    name: staging
   artifacts:
     paths: 
-    - dev_env_app_ingress_url.txt
+    - stage_env_app_ingress_url.txt
+
+staging_integration_testing:
+  stage: stage-deploy
+  dependencies:
+  - staging_deploy
+  image: alpine:3.7
+  before_script:
+  - apk --no-cache add curl
+  - apk --no-cache add jq
+  - STAGING_IP=cat dev_env_app_ingress_url.txt
+  script:
+  - curl -s -k https://$STAGING_IP/live | jq -r .status | grep -i live
+  - curl -s -k https://$STAGING_IP/ready | jq -r .status | grep -i ready

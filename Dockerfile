@@ -10,6 +10,8 @@ COPY . .
 
 ENV NODE_ENV=deploy
 
+
 EXPOSE 3000
+
 
 CMD [ "npm", "start" ]
