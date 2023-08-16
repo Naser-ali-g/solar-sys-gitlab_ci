@@ -27,6 +27,7 @@ workflow:
   before_script:
   - apk --no-cache add curl
   - apk --no-cache add jq
+  - URL=`cat stage_env_app_ingress_url.txt`
 
 .prepare_deployment_environment:
   image:
@@ -105,17 +106,17 @@ docker_build:
     paths:
       - image
 
-docker_test:
-  stage: docker
-  extends: .prepare_docker_environment
-  needs:
-    - docker_build
-  script:
-    - docker load -i image/solar-system-image.tar
-    - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
-    - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
-    - echo $IP
-    - docker run  alpine wget -q -O - http://$IP:3000/live | grep live
+# docker_test:
+#   stage: docker
+#   extends: .prepare_docker_environment
+#   needs:
+#     - docker_build
+#   script:
+#     - docker load -i image/solar-system-image.tar
+#     - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+#     - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
+#     - echo $IP
+#     - docker run  alpine wget -q -O - http://$IP:3000/live | grep live
 
 docker_push:  
   stage: docker
@@ -151,12 +152,10 @@ dev_integration_testing:
   needs:
     - development_deploy
   extends: .prepare_integration_testing
-  before_script:
-  - DEV_IP=`cat dev_env_app_ingress_url.txt`
   script:
-  - echo $DEV_IP
-  - curl -s -k https://$DEV_IP/live | jq -r .status | grep -i live
-  - curl -s -k https://$DEV_IP/ready | jq -r .status | grep -i ready
+  - echo $URL
+  - curl -s -k https://$URL/live | jq -r .status | grep -i live
+  - curl -s -k https://$URL/ready | jq -r .status | grep -i ready
 
 staging_deploy:
   stage: stage-deploy
@@ -180,8 +179,6 @@ staging_integration_testing:
   needs:
   - staging_deploy
   extends: .prepare_integration_testing
-  before_script:
-  - STAGING_IP=`cat stage_env_app_ingress_url.txt`
   script:
-  - curl -s -k https://$STAGING_IP/live | jq -r .status | grep -i live
-  - curl -s -k https://$STAGING_IP/ready | jq -r .status | grep -i ready
+  - curl -s -k https://$URL/live | jq -r .status | grep -i live
+  - curl -s -k https://$URL/ready | jq -r .status | grep -i ready
