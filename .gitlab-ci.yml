@@ -28,6 +28,10 @@ workflow:
   - apk --no-cache add curl
   - apk --no-cache add jq
   - URL=`cat app_ingress_url.txt`
+  script:
+  - echo $URL
+  - curl -s -k https://$URL/live | jq -r .status | grep -i live
+  - curl -s -k https://$URL/ready | jq -r .status | grep -i ready
 
 .prepare_deployment_environment:
   image:
@@ -148,14 +152,13 @@ development_deploy:
     - app_ingress_url.txt
 
 dev_integration_testing:
+  tags:
+    - linux
+    - killercoda
   stage: dev-deploy
   needs:
     - development_deploy
   extends: .prepare_integration_testing
-  script:
-  - echo $URL
-  - curl -s -k https://$URL/live | jq -r .status | grep -i live
-  - curl -s -k https://$URL/ready | jq -r .status | grep -i ready
 
 staging_deploy:
   stage: stage-deploy
@@ -175,10 +178,10 @@ staging_deploy:
   when: manual
 
 staging_integration_testing:
+  tags:
+    - linux
+    - killercoda
   stage: stage-deploy
   needs:
   - staging_deploy
   extends: .prepare_integration_testing
-  script:
-  - curl -s -k https://$URL/live | jq -r .status | grep -i live
-  - curl -s -k https://$URL/ready | jq -r .status | grep -i ready
