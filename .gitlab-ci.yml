@@ -152,9 +152,6 @@ development_deploy:
     - app_ingress_url.txt
 
 dev_integration_testing:
-  tags:
-    - linux
-    - killercoda
   stage: dev-deploy
   needs:
     - development_deploy
