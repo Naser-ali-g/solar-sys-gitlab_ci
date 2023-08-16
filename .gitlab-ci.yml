@@ -117,7 +117,7 @@ docker_push:
     -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
     -  docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
 
-dev_deploy:
+development_deploy:
   stage: dev-deploy
   image:
     name: alpine:3.7
@@ -144,13 +144,14 @@ dev_deploy:
 dev_integration_testing:
   stage: dev-deploy
   dependencies:
-  - dev_deploy
+  - development_deploy
   image: alpine:3.7
   before_script:
   - apk --no-cache add curl
   - apk --no-cache add jq
   - DEV_IP=cat dev_env_app_ingress_url.txt
   script:
+  - echo $DEV_IP
   - curl -s -k https://$DEV_IP/live | jq -r .status | grep -i live
   - curl -s -k https://$DEV_IP/ready | jq -r .status | grep -i ready
 
