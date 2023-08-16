@@ -143,6 +143,8 @@ development_deploy:
 
 dev_integration_testing:
   stage: dev-deploy
+  needs:
+  - development_deploy
   dependencies:
   - development_deploy
   image: alpine:3.7
