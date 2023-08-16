@@ -144,12 +144,13 @@ development_deploy:
 dev_integration_testing:
   stage: dev-deploy
   needs:
-  - development_deploy
+    - development_deploy
   image: alpine:3.7
   before_script:
+  - ls -ltr
   - apk --no-cache add curl
   - apk --no-cache add jq
-  - DEV_IP=cat dev_env_app_ingress_url.txt
+  - DEV_IP=`cat dev_env_app_ingress_url.txt`
   script:
   - echo $DEV_IP
   - curl -s -k https://$DEV_IP/live | jq -r .status | grep -i live
@@ -186,7 +187,7 @@ staging_integration_testing:
   before_script:
   - apk --no-cache add curl
   - apk --no-cache add jq
-  - STAGING_IP=cat dev_env_app_ingress_url.txt
+  - STAGING_IP=`cat stage_env_app_ingress_url.txt`
   script:
   - curl -s -k https://$STAGING_IP/live | jq -r .status | grep -i live
   - curl -s -k https://$STAGING_IP/ready | jq -r .status | grep -i ready
