@@ -145,8 +145,6 @@ dev_integration_testing:
   stage: dev-deploy
   needs:
   - development_deploy
-  dependencies:
-  - development_deploy
   image: alpine:3.7
   before_script:
   - apk --no-cache add curl
@@ -182,7 +180,7 @@ staging_deploy:
 
 staging_integration_testing:
   stage: stage-deploy
-  dependencies:
+  needs:
   - staging_deploy
   image: alpine:3.7
   before_script:
