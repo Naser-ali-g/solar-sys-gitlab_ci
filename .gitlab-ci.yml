@@ -18,6 +18,7 @@ variables:
    NODE_ENV_DEPLOY : "deploy"
    IMAGE_VERSION: $CI_PIPELINE_ID
    IMAGE: $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+   INGRESS_IP: "45.79.61.202"
 
 # unit_testing:
 #   stage: testing
