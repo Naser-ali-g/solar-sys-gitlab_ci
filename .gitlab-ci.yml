@@ -21,59 +21,59 @@ variables:
    IMAGE: $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
    INGRESS_IP: "45.79.61.202"
 
-# unit_testing:
-#   stage: testing
-#   services:
-#     - name: siddharth67/mongo-db:non-prod
-#       alias: mongo
-#       variables:
-#          MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"  
-#   image: node:18-alpine3.17
-#   cache:
-#     policy: pull-push
-#     key: testing
-#     paths:
-#       - node_modules
-#   before_script:
-#     - npm install
-#   script:
-#     - NODE_ENV=$NODE_ENV_TESTING npm test
-#   artifacts:
-#     name: Mocha Unit Testing
-#     expire_in: 3 weeks and 2 days
-#     when: always
-#     paths:
-#       - test-results.xml
-#     reports:
-#       junit: test-results.xml
+unit_testing:
+  stage: testing
+  services:
+    - name: siddharth67/mongo-db:non-prod
+      alias: mongo
+      variables:
+         MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"  
+  image: node:18-alpine3.17
+  cache:
+    policy: pull-push
+    key: testing
+    paths:
+      - node_modules
+  before_script:
+    - npm install
+  script:
+    - NODE_ENV=$NODE_ENV_TESTING npm test
+  artifacts:
+    name: Mocha Unit Testing
+    expire_in: 3 weeks and 2 days
+    when: always
+    paths:
+      - test-results.xml
+    reports:
+      junit: test-results.xml
 
-# code_coverage:
-#   stage: testing
-#   services:
-#     - name: siddharth67/mongo-db:non-prod
-#       alias: mongo
-#       variables:
-#          MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"
-#   image: node:18-alpine3.17
-#   cache:
-#     policy: pull
-#     key: testing
-#     paths:
-#       - node_modules
-#   needs:
-#     - unit_testing
-#   before_script:
-#     - npm install
-#   script:
-#    - NODE_ENV=$NODE_ENV_TESTING npm run coverage
-#   artifacts:
-#     name: LCOV and Cobertura Coverage
-#     expire_in: 3 weeks and 2 days
-#     when: always
-#     paths:
-#     - coverage/
-#   coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
-#   allow_failure: true
+code_coverage:
+  stage: testing
+  services:
+    - name: siddharth67/mongo-db:non-prod
+      alias: mongo
+      variables:
+         MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"
+  image: node:18-alpine3.17
+  cache:
+    policy: pull
+    key: testing
+    paths:
+      - node_modules
+  needs:
+    - unit_testing
+  before_script:
+    - npm install
+  script:
+   - NODE_ENV=$NODE_ENV_TESTING npm run coverage
+  artifacts:
+    name: LCOV and Cobertura Coverage
+    expire_in: 3 weeks and 2 days
+    when: always
+    paths:
+    - coverage/
+  coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
+  allow_failure: true
 
 docker_build:
   stage: docker
@@ -121,6 +121,7 @@ development_deploy:
   stage: dev-deploy
   image:
     name: alpine:3.7
+  dependencies: []
   before_script:
     - wget https://storage.googleapis.com/kubernetes-release/release/$(wget -q -O - https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl 
     - chmod +x ./kubectl
@@ -191,3 +192,4 @@ staging_integration_testing:
   script:
   - curl -s -k https://$STAGING_IP/live | jq -r .status | grep -i live
   - curl -s -k https://$STAGING_IP/ready | jq -r .status | grep -i ready
+  when: manual
