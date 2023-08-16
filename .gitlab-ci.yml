@@ -17,6 +17,11 @@ workflow:
   before_script:
     - npm install
 
+.prepare_docker_environment:
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind  
+
 stages:
   - testing
   - docker
@@ -31,87 +36,81 @@ variables:
    IMAGE: $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
    INGRESS_IP: "45.79.61.202"
 
-unit_testing:
-  extends: .prepare_nodejs_environment
-  stage: testing
-  cache:
-    policy: pull-push
-    key: testing
-    paths:
-      - node_modules
-  script:
-    - NODE_ENV=$NODE_ENV_TESTING npm test
-  artifacts:
-    name: Mocha Unit Testing
-    expire_in: 3 weeks and 2 days
-    when: always
-    paths:
-      - test-results.xml
-    reports:
-      junit: test-results.xml
-
-code_coverage:
-  stage: testing
-  extends: .prepare_nodejs_environment
-  cache:
-    policy: pull
-    key: testing
-    paths:
-      - node_modules
-  needs:
-    - unit_testing
-  script:
-   - NODE_ENV=$NODE_ENV_TESTING npm run coverage
-  artifacts:
-    name: LCOV and Cobertura Coverage
-    expire_in: 3 weeks and 2 days
-    when: always
-    paths:
-    - coverage/
-  coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
-  allow_failure: true
-
-# docker_build:
-#   stage: docker
-#   image: docker:24.0.5
-#   dependencies: []
-#   services:
-#     - docker:24.0.5-dind
-#   script: 
-#     - docker build -t $DOCKER_USERNAME/solar-system:$IMAGE_VERSION .
-#     - docker images $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
-#     - mkdir image
-#     - docker save $DOCKER_USERNAME/solar-system:$IMAGE_VERSION > image/solar-system-image.tar
-#   artifacts:
+# unit_testing:
+#   extends: .prepare_nodejs_environment
+#   stage: testing
+#   cache:
+#     policy: pull-push
+#     key: testing
 #     paths:
-#       - image
-
-# docker_test:
-#   stage: docker
-#   image: docker:24.0.5
-#   needs:
-#     - docker_build
-#   services:
-#     - docker:24.0.5-dind
+#       - node_modules
 #   script:
-#     - docker load -i image/solar-system-image.tar
-#     - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
-#     - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
-#     - echo $IP
-#     - docker run  alpine wget -q -O - http://$IP:3000/live | grep live
+#     - NODE_ENV=$NODE_ENV_TESTING npm test
+#   artifacts:
+#     name: Mocha Unit Testing
+#     expire_in: 3 weeks and 2 days
+#     when: always
+#     paths:
+#       - test-results.xml
+#     reports:
+#       junit: test-results.xml
 
-# docker_push:  
-#   stage: docker
+# code_coverage:
+#   stage: testing
+#   extends: .prepare_nodejs_environment
+#   cache:
+#     policy: pull
+#     key: testing
+#     paths:
+#       - node_modules
 #   needs:
-#     - docker_build
-#     - docker_test
-#   image: docker:24.0.5
-#   services:
-#     - docker:24.0.5-dind
-#   script: 
-#     -  docker load -i image/solar-system-image.tar
-#     -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
-#     -  docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+#     - unit_testing
+#   script:
+#    - NODE_ENV=$NODE_ENV_TESTING npm run coverage
+#   artifacts:
+#     name: LCOV and Cobertura Coverage
+#     expire_in: 3 weeks and 2 days
+#     when: always
+#     paths:
+#     - coverage/
+#   coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
+#   allow_failure: true
+
+docker_build:
+  stage: docker
+  extends: .prepare_docker_environment
+  dependencies: []
+  script: 
+    - docker build -t $DOCKER_USERNAME/solar-system:$IMAGE_VERSION .
+    - docker images $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+    - mkdir image
+    - docker save $DOCKER_USERNAME/solar-system:$IMAGE_VERSION > image/solar-system-image.tar
+  artifacts:
+    paths:
+      - image
+
+docker_test:
+  stage: docker
+  extends: .prepare_docker_environment
+  needs:
+    - docker_build
+  script:
+    - docker load -i image/solar-system-image.tar
+    - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+    - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
+    - echo $IP
+    - docker run  alpine wget -q -O - http://$IP:3000/live | grep live
+
+docker_push:  
+  stage: docker
+  extends: .prepare_docker_environment
+  needs:
+    - docker_build
+    - docker_test
+  script: 
+    -  docker load -i image/solar-system-image.tar
+    -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
+    -  docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
 
 # development_deploy:
 #   stage: dev-deploy
@@ -189,4 +188,3 @@ code_coverage:
 #   script:
 #   - curl -s -k https://$STAGING_IP/live | jq -r .status | grep -i live
 #   - curl -s -k https://$STAGING_IP/ready | jq -r .status | grep -i ready
-
