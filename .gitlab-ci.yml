@@ -27,7 +27,7 @@ workflow:
   before_script:
   - apk --no-cache add curl
   - apk --no-cache add jq
-  - URL=`cat stage_env_app_ingress_url.txt`
+  - URL=`cat app_ingress_url.txt`
 
 .prepare_deployment_environment:
   image:
@@ -140,12 +140,12 @@ development_deploy:
   - kubectl config view
   - for i in kubernetes/development/*.yaml; do envsubst < $i | kubectl apply -f -; done # Directory where yamls are placed in repo
   - kubectl -n $NAMESPACE get all,ing
-  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > dev_env_app_ingress_url.txt
+  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > app_ingress_url.txt
   environment: 
     name: development
   artifacts:
     paths: 
-    - dev_env_app_ingress_url.txt
+    - app_ingress_url.txt
 
 dev_integration_testing:
   stage: dev-deploy
@@ -166,12 +166,12 @@ staging_deploy:
   - kubectl config view
   - for i in kubernetes/development/*.yaml; do envsubst < $i | kubectl apply -f -; done # Directory where yamls are placed in repo
   - kubectl -n $NAMESPACE get all,ing
-  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > stage_env_app_ingress_url.txt
+  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > app_ingress_url.txt
   environment: 
     name: staging
   artifacts:
     paths: 
-    - stage_env_app_ingress_url.txt
+    - app_ingress_url.txt
   when: manual
 
 staging_integration_testing:
