@@ -25,12 +25,12 @@ workflow:
 .prepare_integration_testing:
   image: alpine:3.7
   before_script:
-  - apk --no-cache add curl
+  - apk --no-cache add curl   #we need here to inistall curl and jq to use it in testing the integration
   - apk --no-cache add jq
-  - URL=`cat app_ingress_url.txt`
+  - URL=`cat app_ingress_url.txt`  #to get the url of ingress 
   script:
   - echo $URL
-  - curl -s -k https://$URL/live | jq -r .status | grep -i live
+  - curl -s -k https://$URL/live | jq -r .status | grep -i live  # it opens the url and check if the word live and ready exist so the test is success and u can move to next stage
   - curl -s -k https://$URL/ready | jq -r .status | grep -i ready
 
 .prepare_deployment_environment:
@@ -40,8 +40,8 @@ workflow:
     - wget https://storage.googleapis.com/kubernetes-release/release/$(wget -q -O - https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl 
     - chmod +x ./kubectl
     - mv ./kubectl /usr/bin/kubectl
-    - apk add --no-cache gettext
-    - envsubst -V
+    - apk add --no-cache gettext #install gettext to use envsubst tool 
+    - envsubst -V #check if it installed 
 
 stages:
   - testing
@@ -161,18 +161,18 @@ staging_deploy:
   stage: stage-deploy
   extends: .prepare_deployment_environment
   script:
-  - kubectl config get-contexts
-  - kubectl config use-context sidd-harth/staging-1:kk-agent
+  - kubectl config get-contexts # here we replace connect to cluster with put the kube config in a file var to avoid the security concerns and replaced it by connecting to cluster by adding agent 
+  - kubectl config use-context sidd-harth/staging-1:kk-agent #here we use the contest from the agent we added 
   - kubectl config view
   - for i in kubernetes/development/*.yaml; do envsubst < $i | kubectl apply -f -; done # Directory where yamls are placed in repo
   - kubectl -n $NAMESPACE get all,ing
-  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > app_ingress_url.txt
+  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > app_ingress_url.txt # to get the ingress url and redirect it to file to upload it after that as artifact 
   environment: 
-    name: staging
+    name: staging # we put this job on the env which we created in operate-env to seperate the env from each other and use seperatly values for the variables for each environment 
   artifacts:
     paths: 
-    - app_ingress_url.txt
-  when: manual
+    - app_ingress_url.txt  #upload that as artifact to use it in next jobs
+  when: manual #we do it manual to wait for the admin approve to staging the changes in prod env
 
 staging_integration_testing:
   tags:
