@@ -7,6 +7,42 @@ workflow:
           when: always
         - when: never
 
+.prepare_nodejs_environment:  #we use extends to reuse the configration to make it easy to write and modify the code , we put the common config in a hidden job and call it when we need it
+  services:
+    - name: siddharth67/mongo-db:non-prod
+      alias: mongo
+      variables:
+         MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"  
+  image: node:18-alpine3.17
+  before_script:
+    - npm install
+
+.prepare_docker_environment:
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind  
+
+.prepare_integration_testing:
+  image: alpine:3.7
+  before_script:
+  - apk --no-cache add curl   #we need here to inistall curl and jq to use it in testing the integration
+  - apk --no-cache add jq
+  - URL=`cat app_ingress_url.txt`  #to get the url of ingress 
+  script:
+  - echo $URL
+  - curl -s -k https://$URL/live | jq -r .status | grep -i live  # it opens the url and check if the word live and ready exist so the test is success and u can move to next stage
+  - curl -s -k https://$URL/ready | jq -r .status | grep -i ready
+
+.prepare_deployment_environment:
+  image:
+    name: alpine:3.7
+  before_script:
+    - wget https://storage.googleapis.com/kubernetes-release/release/$(wget -q -O - https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl 
+    - chmod +x ./kubectl
+    - mv ./kubectl /usr/bin/kubectl
+    - apk add --no-cache gettext #install gettext to use envsubst tool 
+    - envsubst -V #check if it installed 
+
 stages:
   - testing
   - docker
@@ -22,20 +58,13 @@ variables:
    INGRESS_IP: "45.79.61.202"
 
 # unit_testing:
+#   extends: .prepare_nodejs_environment
 #   stage: testing
-#   services:
-#     - name: siddharth67/mongo-db:non-prod
-#       alias: mongo
-#       variables:
-#          MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"  
-#   image: node:18-alpine3.17
 #   cache:
 #     policy: pull-push
 #     key: testing
 #     paths:
 #       - node_modules
-#   before_script:
-#     - npm install
 #   script:
 #     - NODE_ENV=$NODE_ENV_TESTING npm test
 #   artifacts:
@@ -49,12 +78,7 @@ variables:
 
 # code_coverage:
 #   stage: testing
-#   services:
-#     - name: siddharth67/mongo-db:non-prod
-#       alias: mongo
-#       variables:
-#          MONGO_INITDB_ROOT_PASSWORD: "root-password-1234"
-#   image: node:18-alpine3.17
+#   extends: .prepare_nodejs_environment
 #   cache:
 #     policy: pull
 #     key: testing
@@ -62,8 +86,6 @@ variables:
 #       - node_modules
 #   needs:
 #     - unit_testing
-#   before_script:
-#     - npm install
 #   script:
 #    - NODE_ENV=$NODE_ENV_TESTING npm run coverage
 #   artifacts:
@@ -77,10 +99,8 @@ variables:
 
 docker_build:
   stage: docker
-  image: docker:24.0.5
+  extends: .prepare_docker_environment
   dependencies: []
-  services:
-    - docker:24.0.5-dind
   script: 
     - docker build -t $DOCKER_USERNAME/solar-system:$IMAGE_VERSION .
     - docker images $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
@@ -90,43 +110,33 @@ docker_build:
     paths:
       - image
 
-docker_test:
-  stage: docker
-  image: docker:24.0.5
-  needs:
-    - docker_build
-  services:
-    - docker:24.0.5-dind
-  script:
-    - docker load -i image/solar-system-image.tar
-    - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
-    - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
-    - echo $IP
-    - docker run  alpine wget -q -O - http://$IP:3000/live | grep live
+# docker_test:
+#   stage: docker
+#   extends: .prepare_docker_environment
+#   needs:
+#     - docker_build
+#   script:
+#     - docker load -i image/solar-system-image.tar
+#     - docker run --name solar-system-app -d -p 3000:3000 $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
+#     - export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
+#     - echo $IP
+#     - docker run  alpine wget -q -O - http://$IP:3000/live | grep live
 
 docker_push:  
   stage: docker
+  extends: .prepare_docker_environment
   needs:
     - docker_build
-    - docker_test
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind 
+#    - docker_test
   script: 
     -  docker load -i image/solar-system-image.tar
     -  docker login --username=$DOCKER_USERNAME --password=$DOCKER_PASSWORD
     -  docker push $DOCKER_USERNAME/solar-system:$IMAGE_VERSION
 
-dev_deploy:
+development_deploy:
   stage: dev-deploy
-  image:
-    name: alpine:3.7
-  before_script:
-    - wget https://storage.googleapis.com/kubernetes-release/release/$(wget -q -O - https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl 
-    - chmod +x ./kubectl
-    - mv ./kubectl /usr/bin/kubectl
-    - apk add --no-cache gettext
-    - envsubst -V
+  extends: .prepare_deployment_environment
+  dependencies: []
   script:
   - echo $KUBE_CONFIG # first show only this echo and then show/run below commands
   - export KUBECONFIG=$KUBE_CONFIG
@@ -134,58 +144,41 @@ dev_deploy:
   - kubectl config view
   - for i in kubernetes/development/*.yaml; do envsubst < $i | kubectl apply -f -; done # Directory where yamls are placed in repo
   - kubectl -n $NAMESPACE get all,ing
-  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > dev_env_app_ingress_url.txt
+  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > app_ingress_url.txt
   environment: 
     name: development
   artifacts:
     paths: 
-    - dev_env_app_ingress_url.txt
+    - app_ingress_url.txt
 
 dev_integration_testing:
   stage: dev-deploy
-  dependencies:
-  - dev_deploy
-  image: alpine:3.7
-  before_script:
-  - apk --no-cache add curl
-  - apk --no-cache add jq
-  - DEV_IP=cat dev_env_app_ingress_url.txt
-  script:
-  - curl -s -k https://$DEV_IP/live | jq -r .status | grep -i live
-  - curl -s -k https://$DEV_IP/ready | jq -r .status | grep -i ready
+  needs:
+    - development_deploy
+  extends: .prepare_integration_testing
 
 staging_deploy:
   stage: stage-deploy
-  image:
-    name: alpine:3.7
-  before_script:
-    - wget https://storage.googleapis.com/kubernetes-release/release/$(wget -q -O - https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl 
-    - chmod +x ./kubectl
-    - mv ./kubectl /usr/bin/kubectl
-    - apk add --no-cache gettext
-    - envsubst -V
+  extends: .prepare_deployment_environment
   script:
-  - kubectl config get-contexts
-  - kubectl config use-context sidd-harth/staging-1:kk-agent
+  - kubectl config get-contexts # here we replace connect to cluster with put the kube config in a file var to avoid the security concerns and replaced it by connecting to cluster by adding agent 
+  - kubectl config use-context sidd-harth/staging-1:kk-agent #here we use the contest from the agent we added 
   - kubectl config view
   - for i in kubernetes/development/*.yaml; do envsubst < $i | kubectl apply -f -; done # Directory where yamls are placed in repo
   - kubectl -n $NAMESPACE get all,ing
-  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > stage_env_app_ingress_url.txt
+  - kubectl -n $NAMESPACE get ing -o jsonpath="{.items[0].spec.tls[0].hosts[0]}" > app_ingress_url.txt # to get the ingress url and redirect it to file to upload it after that as artifact 
   environment: 
-    name: staging
+    name: staging # we put this job on the env which we created in operate-env to seperate the env from each other and use seperatly values for the variables for each environment 
   artifacts:
     paths: 
-    - stage_env_app_ingress_url.txt
+    - app_ingress_url.txt  #upload that as artifact to use it in next jobs
+  when: manual #we do it manual to wait for the admin approve to staging the changes in prod env
 
 staging_integration_testing:
+  tags:
+    - linux
+    - killercoda
   stage: stage-deploy
-  dependencies:
+  needs:
   - staging_deploy
-  image: alpine:3.7
-  before_script:
-  - apk --no-cache add curl
-  - apk --no-cache add jq
-  - STAGING_IP=cat dev_env_app_ingress_url.txt
-  script:
-  - curl -s -k https://$STAGING_IP/live | jq -r .status | grep -i live
-  - curl -s -k https://$STAGING_IP/ready | jq -r .status | grep -i ready
+  extends: .prepare_integration_testing
